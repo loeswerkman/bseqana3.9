@@ -1,0 +1,569 @@
+# Functie: Maakt een alignment Versie: 2.2
+
+import wx
+import Kim_en_Blos2Herkansing2 as Kim_en_Blos2
+
+
+class SubPanel(wx.Panel):
+    def __init__(self, parent, id):
+        wx.Panel.__init__(self, parent, id, style=wx.BORDER_SUNKEN)
+        # Beetje rotzooi, maar dit hele stuk regelt de UI
+
+        # De zes gebruikte boxen
+        self.hbox = wx.BoxSizer()
+        self.xbox = wx.BoxSizer()
+        self.sidebox = wx.BoxSizer(wx.VERTICAL)
+        self.underbox = wx.BoxSizer()
+        self.vbox = wx.BoxSizer(wx.VERTICAL)
+        self.rechtsbox = wx.BoxSizer(wx.VERTICAL)
+
+        # Display boxes
+        self.alignment = wx.StaticText(self, -1, "De alignment:")
+        font = wx.Font(10, wx.SWISS,
+                       wx.NORMAL, wx.NORMAL, False, u'Courier New')
+        self.alignment.SetFont(font)
+
+        # De Invoer en textdisplay
+        self.text1 = wx.StaticText(self, -1, "Voer een sequentie in")
+        self.textbox1 = wx.TextCtrl(self, -1, "")
+        self.text2 = wx.StaticText(self, -1, "Voer een sequentie in")
+        self.textbox2 = wx.TextCtrl(self, -1, "")
+
+        # De Keuze tussen Dna en Aminozuren
+        radiolist = ["Dna", "Aminozuur"]
+        radiolist2 = ["Global", "Local"]
+        self.radiobox = wx.RadioBox(self, id, "", wx.DefaultPosition,
+                                    wx.DefaultSize, radiolist,
+                                    1, wx.RA_SPECIFY_ROWS)
+        self.radiobox2 = wx.RadioBox(self, id, "", wx.DefaultPosition,
+                                     wx.DefaultSize, radiolist2,
+                                     1, wx.RA_SPECIFY_ROWS)
+        self.start = wx.Button(self, -1, "Start")
+
+        # Locatie Keuze
+        self.xspin = wx.SpinCtrl(self, -1, style=wx.SP_WRAP)
+        self.xtext = wx.StaticText(self, -1, "X coordinaat")
+        self.yspin = wx.SpinCtrl(self, -1, style=wx.SP_WRAP)
+        self.ytext = wx.StaticText(self, -1, "Y coordinaat")
+        self.check = wx.Button(self, -1, "Check")
+        self.result = wx.StaticText(self, -1, "Score1:\nScore2:\nScore3:")
+
+        # Alles toevoegen aan de onderkant
+        self.underbox.Add(self.alignment, 1, wx.EXPAND)
+
+        # Alles toevoegen aan de linkerkant
+        self.sidebox.Add(self.text1, 0, wx.EXPAND)
+        self.sidebox.Add(self.textbox1, 2, wx.EXPAND)
+        self.sidebox.Add(self.text2, 0, wx.EXPAND)
+        self.sidebox.Add(self.textbox2, 2, wx.EXPAND)
+        self.sidebox.Add(self.radiobox, 0, wx.EXPAND)
+        self.sidebox.Add(self.radiobox2, 0, wx.EXPAND)
+        self.sidebox.Add(self.start, 1, wx.EXPAND)
+
+        # Alles toevoegen aan de rechterkant
+        self.rechtsbox.Add(self.xtext, 0, wx.EXPAND)
+        self.rechtsbox.Add(self.xspin, 0, wx.EXPAND)
+        self.rechtsbox.Add(self.ytext, 0, wx.EXPAND)
+        self.rechtsbox.Add(self.yspin, 0, wx.EXPAND)
+        self.rechtsbox.Add(self.check, 0, wx.EXPAND)
+        self.rechtsbox.Add(self.result, 0, wx.EXPAND)
+
+        # Het toevoegen van de boxes in de juiste volgorde
+        self.hbox.Add(self.sidebox, 0, wx.EXPAND)
+        self.hbox.Add(self.xbox, 4, wx.EXPAND)
+        self.hbox.Add(self.rechtsbox, 0, wx.EXPAND)
+        self.vbox.Add(self.hbox, 5, wx.EXPAND)
+        self.vbox.Add(self.underbox, 1, wx.EXPAND)
+
+        # De functies binden aan de widgets
+        self.start.Bind(wx.EVT_BUTTON, self.Start__rijen_vuller)
+        self.textbox2.Bind(wx.EVT_TEXT, self.typer)
+        self.textbox1.Bind(wx.EVT_TEXT, self.typer)
+        self.check.Bind(wx.EVT_BUTTON, self.checker)
+
+
+        # Alles goed duidelijk tonen
+        self.SetSizer(self.vbox)
+        self.ytext.Hide()
+        self.xtext.Hide()
+        self.xspin.Hide()
+        self.yspin.Hide()
+        self.result.Hide()
+        self.check.Hide()
+
+        # De Variabele
+        self.seq1 = ""
+        self.seq2 = ""
+        self.alle_rijen = []
+        self.paneellijsten = []
+        self.x =1
+        self.y =1
+
+    def checker(self, event):
+        # Deze functie zoekt de waardes van specifieke coordinaten
+        self.x = self.xspin.GetValue()+1
+        self.y = self.yspin.GetValue()+1
+        if self.x != 1 or self.y != 1:
+            een, twee, drie = Kim_en_Blos2.locatiezoeker(
+                self.radiobox.GetStringSelection(), self.alle_rijen[self.x],
+                self.alle_rijen, self.x, self.y, self.seq1, self.seq2)
+        else:
+            een, twee, drie = "0", "N/a", "N/a"
+        self.result.SetLabel("Score1:" + str(een) + "\nScore2:"
+                             + str(twee) + "\nScore3:" + str(drie))
+
+    def typer(self, event):
+        # Deze functie regelt de input in de invoer boxes en controleert
+        # of ze in het correct formaat zijn
+
+        for i in self.textbox1.GetValue():
+            if i.upper() not in Kim_en_Blos2.alle_nucleos and \
+                    self.radiobox.GetStringSelection() == "Dna":
+                self.textbox1.SetValue(self.textbox1.GetValue().replace(i, ""))
+                print("Een incorrect teken is verwijderd")
+            if i.upper() not in Kim_en_Blos2.alle_aminos and\
+                    self.radiobox.GetStringSelection() == "Aminozuur":
+                self.textbox1.SetValue(self.textbox1.GetValue().replace(i, ""))
+                print("Een incorrect teken is verwijderd")
+
+        for i in self.textbox2.GetValue():
+            if i.upper() not in Kim_en_Blos2.alle_nucleos and\
+                    self.radiobox.GetStringSelection() == "Dna":
+                self.textbox2.SetValue(self.textbox2.GetValue().replace(i, ""))
+                print("Een incorrect teken is verwijderd")
+            if i.upper() not in Kim_en_Blos2.alle_aminos and\
+                    self.radiobox.GetStringSelection() == "Aminozuur":
+                self.textbox2.SetValue(self.textbox2.GetValue().replace(i, ""))
+                print("Een incorrect teken is verwijderd")
+            if len(self.textbox1.GetValue()) < 25:
+                self.seq1 = "-" + self.textbox1.GetValue().upper()
+            else:
+                self.seq1 = "-" + self.textbox1.GetValue().upper()[0:25]
+            if len(self.textbox2.GetValue()) < 25:
+                self.seq2 = "-" + self.textbox2.GetValue().upper()
+            else:
+                self.seq1 = "-" + self.textbox2.GetValue().upper()[0:25]
+
+    def Start__rijen_vuller(self, event):
+        # Dit is alles dat gebeurt het moment dat de Startknop wordt
+        # gedrukt. Start__ begint bij rijen_vuller en gaat verder naar
+        # vervolgfuncties Start__tabel_vuller en Start__traceback.
+        # In deze functie wordt de inhoud van de tabel gevonden, zonder
+        # dat deze nog wordt ingevoegd. Dit gebeurt na de return.
+        # :param event:
+        # :return: De vervolgstap: Start__tabel_vuller .
+
+        self.typer(event)
+        self.xbox.Clear()
+        self.alle_rijen = []
+
+        for loca2 in range(len(self.seq2)):  # voor elke RIJ
+            een_rij = [self.seq2[loca2]]
+            for loca1 in range(len(self.seq1)):  # voor elke KOLOM
+                een_rij.append(Kim_en_Blos2.matrix_maker(
+                    self.radiobox.GetStringSelection(), een_rij,
+                    self.alle_rijen, loca1, loca2, self.seq1, self.seq2))
+
+            self.alle_rijen.append(een_rij)
+        return self.Start__tabel_vuller()
+
+    def Start__tabel_vuller(self):
+        # In deze functie wordt de inhoud die is gemaakt in Start__
+        # rijen_vuller ingevoegd in de tabel.
+        # :return: De vervolgstap: Start__traceback
+
+        self.alle_rijen.insert(0, list("#" + self.seq1))
+        self.paneellijsten = []
+
+        for rij in self.alle_rijen:
+            kolom = wx.BoxSizer(wx.VERTICAL)
+            lijst = []
+            for item in rij:
+                if self.radiobox2.GetStringSelection() == "Local" \
+                        and type(item) == int and item < 0:
+                    item = 0
+                tekst_cel = wx.StaticText(self, -1, str(item))
+                kolom.Add(tekst_cel, 1, wx.EXPAND)
+                lijst.append(tekst_cel)
+            self.paneellijsten.append(lijst)
+            self.xbox.Add(kolom, 1, wx.EXPAND)
+            # Dan worden alle widgets getoond
+            self.ytext.Show()
+            self.xtext.Show()
+            self.xspin.Show()
+            self.yspin.Show()
+            self.result.Show()
+            self.check.Show()
+
+            # verandert de range van de spinners
+            self.yspin.SetRange(0, len(self.alle_rijen[0])-2)
+            self.xspin.SetRange(0, len(self.alle_rijen)-2)
+            self.Layout()
+        return self.Start__traceback()
+
+    def Start__traceback(self):
+
+        # In deze functie wordt de traceback gevonden uit de inhoud van
+        # Start__rijen_vuller. Deze wordt vervolgens ook gebruikt om de
+        # uiteindelijke alignment te maken en weer te geven.
+        # :return: geen return, wel een uitkomst: traceback + alignment
+
+        if self.radiobox2.GetStringSelection() == "Global":
+            x = len(self.alle_rijen) - 1
+            y = len(self.alle_rijen[0]) - 1
+        else:
+            begin = 0
+            x = 0
+            y = 0
+            for row in range(len(self.alle_rijen)):
+                for item in range(len(self.alle_rijen[row])):
+                    if type(self.alle_rijen[row][item]) == int and\
+                            self.alle_rijen[row][item] > begin:
+                        begin = self.alle_rijen[row][item]
+                        x = row
+                        y = item
+        align1 = ""
+        align2 = ""
+        keepgoing = "Yes"
+
+        if self.radiobox2.GetStringSelection() == "Local" and begin == 0:
+            keepgoing = "Nah"
+        while keepgoing == "Yes":
+            self.paneellijsten[x][y].SetOwnBackgroundColour(wx.RED)
+            lijst = []
+            links = self.alle_rijen[x - 1][y]
+            omhoog = self.alle_rijen[x][y - 1]
+            schuin = self.alle_rijen[x - 1][y - 1]
+            for i in (links, omhoog, schuin):
+                if type(i) == int:
+                    if self.radiobox2.GetStringSelection() == "Global"\
+                            or self.radiobox2.GetStringSelection() == \
+                            "Local" and i > 0:
+                        lijst.append(i)
+
+            if len(lijst) != 0:
+                lijst.sort()
+                hoogste = lijst[-1]
+                hetzelfde = True
+                for i in lijst:
+                    if i != hoogste:
+                        hetzelfde = False
+
+                if hoogste == schuin or hetzelfde is True:
+                    if x != 2 and y != 2:
+                        align1 += self.alle_rijen[x][0]
+                        align2 += str(self.alle_rijen[0][y])
+                        x -= 1
+                        y -= 1
+                    else:
+                        keepgoing = "nah"
+                        align1 += self.alle_rijen[x][0]
+                        align2 += str(self.alle_rijen[0][y])
+                        self.Alignment(align1, align2)
+
+                elif hoogste == links:
+                    if x != 2 and y != 1:
+                        align1 += self.alle_rijen[x][0]
+                        align2 += "-"
+                        x -= 1
+                    else:
+                        keepgoing = "nah"
+                        align1 += self.alle_rijen[x][0]
+                        align2 += str(self.alle_rijen[0][y])
+                        self.Alignment(align1, align2)
+                elif hoogste == omhoog:
+                    if x != 0 and y != 1:
+                        align1 += "-"
+                        align2 += str(self.alle_rijen[0][y])
+                        y -= 1
+                    else:
+                        keepgoing = "nah"
+                        align1 += self.alle_rijen[x][0]
+                        align2 += str(self.alle_rijen[0][y])
+                        self.Alignment(align1, align2)
+            else:
+                align1 += self.alle_rijen[x][0]
+                align2 += str(self.alle_rijen[0][y])
+                self.Alignment(align1, align2)
+                keepgoing = "No"
+
+    def Alignment(self, align1, align2):
+        # Deze Functie gebruikt de twee sequenties en maakt er een
+        # correcte alignment van,
+        # deze wordt daarna getoond op het scherm
+
+        alignment = []
+        for aa1, aa2 in zip(align1[::-1], align2[::-1]):
+            if aa1 == aa2:
+                alignment.append("|")
+            elif aa1 == "-" or aa2 == "-":
+                alignment.append(" ")
+            elif aa1 != aa2:
+                alignment.append("*")
+        self.alignment.SetLabel("De alignment:" + "\n" +
+                                align1[::-1] + "\n" + "".join(alignment) +
+                                "\n" + align2[::-1])
+        self.Layout()
+
+
+if __name__ == "__main__":
+    class Schermpje(wx.Frame):
+        def __init__(self, parent, id, title):
+            wx.Frame.__init__(self, parent, id, title)
+            self.paneeltje = SubPanel(self, -1)
+            self.Show(True)
+            self.Maximize()
+
+    app = wx.App()
+    Schermpje(None, -1, "Sequenties")
+    app.MainLoop()
+
+##_________________________________________________________________________
+##_________________________________________________________________________##_________________________________________________________________________
+##_________________________________________________________________________
+
+# Functie: De functies van dit script geven de juiste score per cel voor
+#        de tabel in het programma BSEQANA.
+# Versie: 2.2
+
+
+"""GLOBALE VARIABELEN"""
+
+# Deze twee variabelen worden gebruikt om te checken of ingevoerde
+# tekens een juiste sequentie vormen
+alle_aminos = list('-ARNDCQEGHILKMFPSTWYVBZ')
+alle_nucleos = list('-ACTG')
+
+# Deze veriabele geeft de score terug die hoort bij een gegeven combi
+# van nucleotiden (of gaps)
+kimura = {'--': 0, '-A': -5, '-T': -5, '-C': -5, '-G': -5,
+          'A-': -5, 'AA': 5, 'AT': -4, 'AC': -4, 'AG': 0,
+          'T-': -5, 'TA': -4, 'TT': 5, 'TC': 0, 'TG': -4,
+          'C-': -5, 'CA': -4, 'CT': 0, 'CC': 5, 'CG': -4,
+          'G-': -5, 'GA': 0, 'GT': -4, 'GC': -4, 'GG': 5}
+
+# Deze variabele vormt een lijst voor elk aminozuur, met daarin de
+# score die hoort bij de combinatie met elk tweede aminozuur.
+# Hierbij geldt: de lijsten zijn op alfabetische volgorde, en om de
+# juiste score te kunnen krijgen, moet je de locatie weten van het
+# eerste en tweede aminozuur in de alle_aminos variabele.
+# waarbij de juiste score te vinden is op deze manier:
+# blosum62[locatie amino1 in alle_aminos][locatie amino2 in alle_aminos]
+blosum62 = [[4, -1, -2, -2, 0, -1, -1, 0, -2, -1, -1, -1, -1, -2, -1,
+             1, 0, -3, -2, 0, -2, -1, 0, -4],
+            [-1, 5, 0, -2, -3, 1, 0, -2, 0, -3, -2, 2, -1, -3, -2, -1,
+             -1, -3, -2, -3, -1, 0, -1, -4],
+            [-2, 0, 6, 1, -3, 0, 0, 0, 1, -3, -3, 0, -2, -3, -2, 1, 0,
+             -4, -2, -3, 3, 0, -1, -4],
+            [-2, -2, 1, 6, -3, 0, 2, -1, -1, -3, -4, -1, -3, -3, -1, 0,
+             -1, -4, -3, -3, 4, 1, -1, -4],
+            [0, -3, -3, -3, 9, -3, -4, -3, -3, -1, -1, -3, -1, -2, -3,
+             -1, -1, -2, -2, -1, -3, -3, -2, -4],
+            [-1, 1, 0, 0, -3, 5, 2, -2, 0, -3, -2, 1, 0, -3, -1, 0, -1,
+             -2, -1, -2, 0, 3, -1, -4],
+            [-1, 0, 0, 2, -4, 2, 5, -2, 0, -3, -3, 1, -2, -3, -1, 0, -1,
+             -3, -2, -2, 1, 4, -1, -4],
+            [0, -2, 0, -1, -3, -2, -2, 6, -2, -4, -4, -2, -3, -3, -2, 0,
+             -2, -2, -3, -3, -1, -2, -1, -4],
+            [-2, 0, 1, -1, -3, 0, 0, -2, 8, -3, -3, -1, -2, -1, -2, -1,
+             -2, -2, 2, -3, 0, 0, -1, -4],
+            [-1, -3, -3, -3, -1, -3, -3, -4, -3, 4, 2, -3, 1, 0, -3, -2,
+             -1, -3, -1, 3, -3, -3, -1, -4],
+            [-1, -2, -3, -4, -1, -2, -3, -4, -3, 2, 4, -2, 2, 0,
+             -3, -2, -1, -2, -1, 1, -4, -3, -1, -4],
+            [-1, 2, 0, -1, -3, 1, 1, -2, -1, -3, -2, 5, -1, -3,
+             -1, 0, -1, -3, -2, -2, 0, 1, -1, -4],
+            [-1, -1, -2, -3, -1, 0, -2, -3, -2, 1, 2, -1, 5, 0,
+             -2, -1, -1, -1, -1, 1, -3, -1, -1, -4],
+            [-2, -3, -3, -3, -2, -3, -3, -3, -1, 0, 0, -3, 0, 6,
+             -4, -2, -2, 1, 3, -1, -3, -3, -1, -4],
+            [-1, -2, -2, -1, -3, -1, -1, -2, -2, -3, -3, -1, -2,
+             -4, 7, -1, -1, -4, -3, -2, -2, -1, -2, -4],
+            [1, -1, 1, 0, -1, 0, 0, 0, -1, -2, -2, 0, -1, -2, -1,
+             4, 1, -3, -2, -2, 0, 0, 0, -4],
+            [0, -1, 0, -1, -1, -1, -1, -2, -2, -1, -1, -1, -1, -2,
+             -1, 1, 5, -2, -2, 0, -1, -1, 0, -4],
+            [-3, -3, -4, -4, -2, -2, -3, -2, -2, -3, -2, -3, -1, 1,
+             -4, -3, -2, 11, 2, -3, -4, -3, -2, -4],
+            [-2, -2, -2, -3, -2, -1, -2, -3, 2, -1, -1, -2, -1, 3, -3,
+             -2, -2, 2, 7, -1, -3, -2, -1, -4],
+            [0, -3, -3, -3, -1, -2, -2, -3, -3, 3, 1, -2, 1, -1, -2, -2, 0, -3,
+             -1, 4, -3, -2, -1, -4],
+            [-2, -1, 3, 4, -3, 0, 1, -1, 0, -3, -4, 0, -3, -3, -2, 0, -1,
+             -4, -3, -3, 4, 1, -1, -4],
+            [-1, 0, 0, 1, -3, 3, 4, -2, 0, -3, -3, 1, -1, -3, -1, 0, -1,
+             -3, -2, -2, 1, 4, -1, -4],
+            [0, -1, -1, -1, -2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -2,
+             0, 0, -2, -1, -1, -1, -1, -1, -4],
+            [-4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4,
+             -4, -4, -4, -4, -4, -4, -4, -4, 1]]
+
+
+# ------------------------------------------------------------------------------
+"""FUNCTIES"""
+
+
+def locatiezoeker(n_of_a, berekend, alle_berekende_lijsten, locatie1, locatie2,
+                 seq1, seq2):
+    # In deze functie worden de mogelijke scores terug gegeven voor de locatie
+    # die in gevoerd is
+    # :param n_of_a: Deze geeft aan of we werken met Nucleotides of Aminozuren
+    # :param berekend: Dit is de lijst met berekende scores van de rij waarin
+    # we op dit moment aan het rekenen zijn
+    # :param alle_berekende_lijsten: Dit is de lijst met daarin de lijsten van
+    # alle berekende lijsten TOT die waar we op dit
+    # moment mee aan het rekenen zijn
+    # :param locatie1: Dit is het hoeveelheidste aminozuur of nucleotide waar
+    # we op dit moment mee bezig zijn, van sequentie 1 (ofwel het kolomnr)
+    # :param locatie2: Dit is het hoeveelheidste aminozuur of nucleotide waar
+    # we op dit moment mee bezig zijn, van sequentie 2 (ofwel rijnr)
+    # :param seq1: Dit is de gehele eerste sequentie (komt bovenaan de tabel)
+    # :param seq2: Dit is de gehele tweede sequentie (komt links in de tabel)
+    # :return: de berekende score voor de cel waarmee we bezig zijn
+
+    if "#" in berekend:
+        berekend.remove("#")
+    eigen_waarde = blos_of_kim(n_of_a, str(seq1[locatie1]), seq2[locatie2])
+    linksboven = 0  # 0 omdat de score linksboven nog niet bestaat
+    xyeigenwaarde = linksboven + eigen_waarde
+
+    if locatie1 < 1 and locatie2 < 1:
+        # dan zijn we helemaal LINKSBOVEN
+        return xyeigenwaarde, "N/a", "N/a"
+
+    elif locatie1 < 1:
+        # dan zijn we bij de eerste kolom (helemaal LINKS) en NIET BOVEN
+        xygap2 = xygapsetc(alle_berekende_lijsten[locatie2 - 1][locatie1 + 1],
+                           blos_of_kim(n_of_a, "-", "A"))
+        return xyeigenwaarde*locatie2, xygap2, "n/a"
+
+    elif locatie2 < 1:
+        # dan zijn we BOVENAAN en NIET LINKS
+        xygap1 = xygapsetc(berekend[locatie1], blos_of_kim(n_of_a, "-", "A"))
+        return xyeigenwaarde*locatie1, xygap1, "n/a"
+
+    else:
+        # dan zijn we niet bovenaan of helemaal links
+        xygap2 = xygapsetc(alle_berekende_lijsten[locatie2 - 1][locatie1 + 1],
+                           blos_of_kim(n_of_a, "-", "A"))
+        xygap1 = xygapsetc(berekend[locatie1], blos_of_kim(n_of_a, "-", "A"))
+        linksboven = alle_berekende_lijsten[locatie2 - 1][locatie1]
+        xyeigenwaarde = linksboven + eigen_waarde
+        return xyeigenwaarde, xygap1, xygap2
+
+
+def matrix_maker(n_of_a, berekend, alle_berekende_lijsten, locatie1, locatie2,
+                 seq1, seq2):
+    # In deze functie wordt gezocht naar de juiste score voor elke cel
+    # in de tabel. Dit wordt in één 'ronde' van de functie voor één
+    # gegeven cel gedaan, waarin bovenaan in de tabel wordt begonnen en
+    # van links naar rechts wordt gewerkt en van boven naar onder.
+    # :param n_of_a: Deze geeft aan of we werken met Nucleotides of Aminozuren
+    # :param berekend: Dit is de lijst met berekende scores van de rij waarin
+    # we op dit moment aan het rekenen zijn
+    # :param alle_berekende_lijsten: Dit is de lijst met daarin de lijsten van
+    # alle berekende lijsten TOT die waar we op dit
+    # moment mee aan het rekenen zijn
+    # :param locatie1: Dit is het hoeveelheidste aminozuur of nucleotide waar
+    # we op dit moment mee bezig zijn, van sequentie 1 (ofwel het kolomnr)
+    # :param locatie2: Dit is het hoeveelheidste aminozuur of nucleotide waar
+    # we op dit moment mee bezig zijn, van sequentie 2 (ofwel rijnr)
+    # :param seq1: Dit is de gehele eerste sequentie (komt bovenaan de tabel)
+    # :param seq2: Dit is de gehele tweede sequentie (komt links in de tabel)
+    # :return: de berekende score voor de cel waarmee we bezig zijn
+
+    if "#" in berekend:
+        berekend.remove("#")
+    eigen_waarde = blos_of_kim(n_of_a, str(seq1[locatie1]), seq2[locatie2])
+    linksboven = 0  # 0 omdat de score linksboven nog niet bestaat
+    xyeigenwaarde = linksboven + eigen_waarde
+
+    if locatie1 < 1 and locatie2 < 1:
+        # dan zijn we helemaal LINKSBOVEN
+        return xyeigenwaarde
+
+    elif locatie1 < 1:
+        # dan zijn we bij de eerste kolom (helemaal LINKS) en NIET BOVEN
+        xygap2 = xygapsetc(alle_berekende_lijsten[locatie2 - 1][locatie1 + 1],
+                           blos_of_kim(n_of_a, "-", "A"))
+        return hoogste_kiezer([xyeigenwaarde*locatie2, xygap2])
+
+    elif locatie2 < 1:
+        # dan zijn we BOVENAAN en NIET LINKS
+        xygap1 = xygapsetc(berekend[locatie1], blos_of_kim(n_of_a, "-", "A"))
+        return hoogste_kiezer([xyeigenwaarde*locatie1, xygap1])
+
+    else:
+        # dan zijn we niet bovenaan of helemaal links
+        xygap2 = xygapsetc(alle_berekende_lijsten[locatie2 - 1][locatie1 + 1],
+                           blos_of_kim(n_of_a, "-", "A"))
+        xygap1 = xygapsetc(berekend[locatie1], blos_of_kim(n_of_a, "-", "A"))
+        linksboven = alle_berekende_lijsten[locatie2 - 1][locatie1]
+        xyeigenwaarde = linksboven + eigen_waarde
+        return hoogste_kiezer(list([xyeigenwaarde, xygap1, xygap2]))
+
+
+def xygapsetc(linksofboven, gapscore):
+    # Deze functie berekend de score voor de twee berekeningen die
+    # gaps meetellen.
+    # :param linksofboven: De score voor links of voor boven wordt hier gegeven
+    # :param gapscore: Hier wordt de score meegegeven van de gaps (-5 bij DNA,
+    #                 -4 bij eiwitsequenties)
+    # :return: De eventuele score voor de cel, vanuit links of vanuit boven
+
+    xygap = int(linksofboven) + gapscore
+    return xygap
+
+
+def blos_of_kim(n_of_a, een, twee):
+
+    # Deze functie geeft de gegeven tekens door aan de juiste
+    # berekenaar.
+    # :param n_of_a: Deze geeft aan of we rekenen met Nucleotides of Aminozuren
+    # :param een: aminozuur of nucleotide van seq 1 waarmee nu gerekend wordt
+    # :param twee: aminozuur of nucleotide van seq 2 waarmee nu gerekend wordt
+    # :return: Kimura-berekende score bij DNA en Blosum-berekende score bij
+    # Aminozuren
+    if n_of_a == "Dna":
+        return kimura_berekenaar(een, twee)
+    return blosum_berekenaar(een, twee)
+
+    # Voor DNA-sequenties
+
+
+def kimura_berekenaar(een, twee):
+    # Deze functie geeft de score die hoort bij de gegeven combinatie
+    # van nucleotiden, aan de hand van de globale variabele kimura.
+    # :param een: nucleotide van seq 1 waarmee nu gerekend wordt
+    # :param twee: nucleotide van seq 2 waarmee nu gerekend wordt
+    # :return: De juiste score
+    combi = een+twee
+    score = kimura[combi]
+    return score
+
+    # voor eiwitsequenties
+
+
+def blosum_berekenaar(een, twee):
+    # Deze functie geeft de score die hoort bij de gegeven combinatie
+    # van aminozuren, aan de hand van de globale variabele blosum62.
+    # :param een: aminozuur van seq 1 waarmee nu gerekend wordt
+    # :param twee: aminozuur van seq 2 waarmee nu gerekend wordt
+    # :return: de juiste score
+
+    locatie_amino1 = alle_aminos.index(een)
+    locatie_amino2 = alle_aminos.index(twee)
+    for score in enumerate(blosum62[locatie_amino1]):
+        if score[0] == locatie_amino2:
+            return score[1]
+
+
+def hoogste_kiezer(lijst):
+
+    # Deze functie neemt een lijst met hierin 3 mogelijke scores voor
+    # een cel, en geeft de hoogste score hiervan terug.
+    # :param lijst: Lijst met 2 (links of boven) of 3 (midden) scores
+    # :return: De hoogste score
+
+    lijst.sort(reverse=True)  # Zet de lijst van hoog naar laag
+    return lijst[0]
