@@ -1,7 +1,7 @@
-# Functie: Maakt een alignment Versie: 2.2
+# Functie: Maakt een alignment Versie: 4.0
 
 import wx
-import Kim_en_Blos2Herkansing2 as Kim_en_Blos2
+import Kim_en_Blos4 as Kim_en_Blos2
 
 
 class SubPanel(wx.Panel):
@@ -101,10 +101,12 @@ class SubPanel(wx.Panel):
 
     def checker(self, event):
         # Deze functie zoekt de waardes van specifieke coordinaten
-        self.x = self.xspin.GetValue()+1
-        self.y = self.yspin.GetValue()+1
-        if self.x != 1 or self.y != 1:
-            een, twee, drie = Kim_en_Blos2.locatiezoeker(
+        self.x = self.xspin.GetValue()
+        self.y = self.yspin.GetValue()
+        if self.x > len(self.seq1) or self.y > len(self.seq2):
+            een, twee, drie = "N/a", "N/a", "N/a"
+        elif self.x != 0 or self.y != 0:
+                een, twee, drie = Kim_en_Blos2.locatiezoeker(
                 self.radiobox.GetStringSelection(), self.alle_rijen[self.x],
                 self.alle_rijen, self.x, self.y, self.seq1, self.seq2)
         else:
@@ -318,13 +320,15 @@ if __name__ == "__main__":
     Schermpje(None, -1, "Sequenties")
     app.MainLoop()
 
+
 ##_________________________________________________________________________
 ##_________________________________________________________________________##_________________________________________________________________________
 ##_________________________________________________________________________
 
+
 # Functie: De functies van dit script geven de juiste score per cel voor
 #        de tabel in het programma BSEQANA.
-# Versie: 2.2
+# Versie: 4.0
 
 
 """GLOBALE VARIABELEN"""
@@ -423,7 +427,9 @@ def locatiezoeker(n_of_a, berekend, alle_berekende_lijsten, locatie1, locatie2,
 
     if "#" in berekend:
         berekend.remove("#")
-    eigen_waarde = blos_of_kim(n_of_a, str(seq1[locatie1]), seq2[locatie2])
+    print("seq1:",seq1,"\tlocatie1:",locatie1,"\nseq2:",seq2,"\tlocatie2:",locatie2)    #printstatement WEGHALEN
+    eigen_waarde = blos_of_kim(n_of_a, str(seq1[locatie2]), seq2[locatie1])     #omgewisseld! # comment WEGHALEN
+    # helemaal raar, maar door deze wisseling gaat het precies zoals het hoort te gaan  #comment WEGHALEN
     linksboven = 0  # 0 omdat de score linksboven nog niet bestaat
     xyeigenwaarde = linksboven + eigen_waarde
 
@@ -433,7 +439,7 @@ def locatiezoeker(n_of_a, berekend, alle_berekende_lijsten, locatie1, locatie2,
 
     elif locatie1 < 1:
         # dan zijn we bij de eerste kolom (helemaal LINKS) en NIET BOVEN
-        xygap2 = xygapsetc(alle_berekende_lijsten[locatie2 - 1][locatie1 + 1],
+        xygap2 = xygapsetc(alle_berekende_lijsten[locatie2][locatie1 + 1],
                            blos_of_kim(n_of_a, "-", "A"))
         return xyeigenwaarde*locatie2, xygap2, "n/a"
 
@@ -444,10 +450,10 @@ def locatiezoeker(n_of_a, berekend, alle_berekende_lijsten, locatie1, locatie2,
 
     else:
         # dan zijn we niet bovenaan of helemaal links
-        xygap2 = xygapsetc(alle_berekende_lijsten[locatie2 - 1][locatie1 + 1],
+        xygap2 = xygapsetc(alle_berekende_lijsten[locatie2][locatie1 + 1],
                            blos_of_kim(n_of_a, "-", "A"))
         xygap1 = xygapsetc(berekend[locatie1], blos_of_kim(n_of_a, "-", "A"))
-        linksboven = alle_berekende_lijsten[locatie2 - 1][locatie1]
+        linksboven = alle_berekende_lijsten[locatie2][locatie1]
         xyeigenwaarde = linksboven + eigen_waarde
         return xyeigenwaarde, xygap1, xygap2
 
@@ -484,7 +490,7 @@ def matrix_maker(n_of_a, berekend, alle_berekende_lijsten, locatie1, locatie2,
 
     elif locatie1 < 1:
         # dan zijn we bij de eerste kolom (helemaal LINKS) en NIET BOVEN
-        xygap2 = xygapsetc(alle_berekende_lijsten[locatie2 - 1][locatie1 + 1],
+        xygap2 = xygapsetc(alle_berekende_lijsten[locatie2 -1][locatie1 + 1],
                            blos_of_kim(n_of_a, "-", "A"))
         return hoogste_kiezer([xyeigenwaarde*locatie2, xygap2])
 
@@ -495,7 +501,7 @@ def matrix_maker(n_of_a, berekend, alle_berekende_lijsten, locatie1, locatie2,
 
     else:
         # dan zijn we niet bovenaan of helemaal links
-        xygap2 = xygapsetc(alle_berekende_lijsten[locatie2 - 1][locatie1 + 1],
+        xygap2 = xygapsetc(alle_berekende_lijsten[locatie2 -1][locatie1 + 1],
                            blos_of_kim(n_of_a, "-", "A"))
         xygap1 = xygapsetc(berekend[locatie1], blos_of_kim(n_of_a, "-", "A"))
         linksboven = alle_berekende_lijsten[locatie2 - 1][locatie1]
